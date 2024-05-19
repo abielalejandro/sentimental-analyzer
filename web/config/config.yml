@@ -1,0 +1,19 @@
+app:
+  name: 'web-service'
+  version: '0.0.1'
+
+logger:
+  log_level: 'debug'
+
+
+event_bus:
+  type: rabbitmq 
+
+rabbit_event_bus:
+  url: 'amqp://guest:guest@localhost:5672'
+  exchange: 'sentimental'
+  exchange_type: 'topic'
+  queue: ''
+  producer_master_routing_key: 'ws.text.created'
+  consumer_master_routing_key: 'master.text.analyzed'
+  auto_ack: true

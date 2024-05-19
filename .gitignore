@@ -1,0 +1,5 @@
+bin/app
+vendor
+control/vendor
+web/vendor
+analyzer/vendor

@@ -1,0 +1,29 @@
+app:
+  name: 'control-service'
+  version: '0.0.1'
+
+logger:
+  log_level: 'debug'
+
+storage:
+  type: generic
+  addr: 'localhost:9042'
+  port: '9042'
+  password: 'admin'
+  user: 'admin'
+  db: 'sentimental'
+  ttl: 10
+
+event_bus:
+  type: rabbitmq 
+
+rabbit_event_bus:
+  url: 'amqp://guest:guest@localhost:5672'
+  exchange: 'sentimental'
+  exchange_type: 'topic'
+  queue: ''
+  producer_ws_routing_key: 'master.text.analyzed'
+  producer_analizer_routing_key: 'master.text.created'
+  consumer_ws_routing_key: 'ws.text.created'
+  consumer_analizer_routing_key: 'analyzer.text.analyzed'
+  auto_ack: true

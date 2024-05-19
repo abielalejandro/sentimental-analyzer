@@ -1,0 +1,21 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  # Cassandra storage for state persistence
+  cassandra:
+    image: cassandra:latest
+    restart: always
+    container_name: cassandra-server
+    ports:
+      - "9042:9042"
+      - "7000:7000"
+    volumes:
+      - "cassandradata:/var/lib/cassandra"
+    healthcheck:
+      test: [ "CMD", "nodetool", "status" ]
+volumes:
+  cassandradata:
+    name: cassandradata
