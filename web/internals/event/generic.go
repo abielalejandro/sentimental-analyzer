@@ -7,13 +7,13 @@ import (
 
 type GenericBus struct {
 	config *config.Config
-	chW    chan<- string
+	chW    chan<- SentimentalResult
 	chR    <-chan string
 }
 
 func NewGenericBus(
 	config *config.Config,
-	chW chan<- string,
+	chW chan<- SentimentalResult,
 	chR <-chan string,
 ) EventBus {
 

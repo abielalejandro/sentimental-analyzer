@@ -16,12 +16,13 @@ type App struct {
 }
 
 func NewApp(config *config.Config) *App {
-	chOut := make(chan string)
 	chIn := make(chan string)
+	chOut := make(chan event.SentimentalResult)
+
 	return &App{
 		Config:   config,
-		EventBus: event.NewEventBus(config, chIn, chOut),
-		Api:      api.NewApi(config, chOut, chIn),
+		EventBus: event.NewEventBus(config, chOut, chIn),
+		Api:      api.NewApi(config, chIn, chOut),
 	}
 }
 

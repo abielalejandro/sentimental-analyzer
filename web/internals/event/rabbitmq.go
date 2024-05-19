@@ -16,13 +16,13 @@ import (
 type RabbitMqBus struct {
 	config *config.Config
 	l      *logger.Logger
-	chW    chan<- string
+	chW    chan<- SentimentalResult
 	chR    <-chan string
 }
 
 func NewRabbitMqBus(
 	config *config.Config,
-	chW chan<- string,
+	chW chan<- SentimentalResult,
 	chR <-chan string) EventBus {
 	return &RabbitMqBus{config: config, l: logger.New(config.Log.Level), chW: chW, chR: chR}
 }
@@ -129,12 +129,24 @@ func (gen *RabbitMqBus) listenMaster(ch *amqp.Channel) {
 
 	go func() {
 		for d := range msgs {
-			t := string(d.Body[:])
-			gen.l.Info(fmt.Sprintf("receiving from master [%v]", t))
+			eventReceived := cloudevents.NewEvent()
+			err := json.Unmarshal(d.Body, &eventReceived)
 			if err != nil {
 				gen.l.Error(err.Error())
 				continue
 			}
+
+			var t SentimentalResult
+			err = json.Unmarshal(eventReceived.Data(), &t)
+			if err != nil {
+				gen.l.Error(err.Error())
+				continue
+			}
+
+			gen.l.Info(fmt.Sprintf("receiving from master [%v]", t))
+
+			gen.chW <- t
 		}
 	}()
+
 }

@@ -15,7 +15,7 @@ type EventBus interface {
 
 func NewEventBus(
 	config *config.Config,
-	chW chan<- string,
+	chW chan<- SentimentalResult,
 	chR <-chan string) EventBus {
 
 	switch config.EventBus.Type {
