@@ -21,6 +21,7 @@ func (svc *ControlService) ProcessMsg(
 	t := time.Now()
 	message := &storage.Message{
 		Id:        uuid.New().String(),
+		Msg:       msg,
 		CreatedAt: t,
 		UpdatedAt: t,
 		ExpiresAt: t.Add(time.Duration(svc.config.Ttl) * time.Minute),
@@ -29,7 +30,7 @@ func (svc *ControlService) ProcessMsg(
 	if err != nil {
 		return "", err
 	}
-	return "id", nil
+	return message.Id, nil
 }
 
 func (svc *ControlService) UpdateSentimentalMsg(

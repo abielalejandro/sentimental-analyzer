@@ -6,7 +6,7 @@ logger:
   log_level: 'debug'
 
 storage:
-  type: generic
+  type: cassandra
   addr: 'localhost:9042'
   port: '9042'
   password: 'admin'

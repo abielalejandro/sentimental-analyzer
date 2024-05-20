@@ -10,13 +10,18 @@ import (
 	"github.com/gocql/gocql"
 )
 
+type CSentimentalResult struct {
+	Label string  `cql:"label"`
+	Score float64 `cql:"score"`
+}
+
 type CMessage struct {
-	Id          gocql.UUID        `cql:"id"`
-	msg         string            `cql:"msg"`
-	msgAnalyzed SentimentalResult `cql:"msg_analyzed"`
-	CreatedAt   time.Time         `cql:"created_at"`
-	UpdateddAt  time.Time         `cql:"updated_at"`
-	ExpiresAt   time.Time         `cql:"expires_at"`
+	Id          gocql.UUID         `cql:"id"`
+	msg         string             `cql:"msg"`
+	msgAnalyzed CSentimentalResult `cql:"msg_analized"`
+	CreatedAt   time.Time          `cql:"created_at"`
+	UpdateddAt  time.Time          `cql:"updated_at"`
+	ExpiresAt   time.Time          `cql:"expires_at"`
 }
 
 type CassandraStorage struct {
@@ -42,6 +47,7 @@ func NewCassandraStorage(config *config.Config) *CassandraStorage {
 	return &CassandraStorage{
 		ClusterConfig: clusterConfig,
 		Session:       session,
+		Config:        config,
 	}
 }
 
@@ -50,10 +56,10 @@ func (storage *CassandraStorage) Create(
 	msg *Message) (bool, error) {
 
 	ttl := storage.Config.Storage.Ttl * 60
-	command := fmt.Sprintf("INSERT INTO messages (id, msg,created_at,updated_at,expires_at) VALUES(?,?,?,?) USING TTL %v;", ttl)
+	command := fmt.Sprintf("INSERT INTO messages (id, msg,created_at,updated_at,expires_at) VALUES(?,?,?,?,?) USING TTL %v;", ttl)
 	err := storage.Query(command,
 		msg.Id,
-		msg.msg,
+		msg.Msg,
 		time.Now(),
 		time.Now(),
 		time.Now().Add(time.Minute*10),
@@ -67,9 +73,14 @@ func (storage *CassandraStorage) Create(
 
 func (storage *CassandraStorage) Update(ctx context.Context, id string, result *SentimentalResult) (bool, error) {
 	ttl := storage.Config.Storage.Ttl * 60
-	command := fmt.Sprintf("UPDATE messages USING TTL %v SET msg_analyzed=?,updated_at=? WHERE id='?'", ttl)
+	command := fmt.Sprintf("UPDATE messages USING TTL %v SET msg_analized=?,updated_at=? WHERE id=?", ttl)
 
-	err := storage.Query(command, result, time.Now(), id).WithContext(ctx).Exec()
+	r := &CSentimentalResult{
+		Label: result.Label,
+		Score: result.Score,
+	}
+
+	err := storage.Query(command, r, time.Now(), id).WithContext(ctx).Exec()
 
 	if err != nil {
 		return false, err

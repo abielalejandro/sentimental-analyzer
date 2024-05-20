@@ -61,7 +61,7 @@ class RabbitEventBus(EventBus):
 
         if result.probas["NEU"]>result.probas["POS"] and result.probas["NEU"]>result.probas["NEG"]:
             label="POSITIVE"
-            score=0.5
+            score=0.500
 
         data= {"Id":event["id"],"Label": label, "Score":score}
         event["data"] = data

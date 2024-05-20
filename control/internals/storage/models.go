@@ -9,8 +9,8 @@ type SentimentalResult struct {
 
 type Message struct {
 	Id          string
-	msg         string
-	msgAnalyzed SentimentalResult
+	Msg         string
+	MsgAnalyzed SentimentalResult
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	ExpiresAt   time.Time
