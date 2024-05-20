@@ -187,10 +187,23 @@ func (gen *RabbitMqBus) listenAnalyzer(ch *amqp.Channel) {
 	go func() {
 		for d := range msgs {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			t := string(d.Body[:])
+			eventReceived := cloudevents.NewEvent()
+			err := json.Unmarshal(d.Body, &eventReceived)
+			if err != nil {
+				gen.l.Error(err.Error())
+				continue
+			}
+
+			gen.l.Info(fmt.Sprintf("receiving crudo [%v]", string(eventReceived.Data())))
+			var t storage.SentimentalResult
+			err = json.Unmarshal(eventReceived.Data(), &t)
+			if err != nil {
+				gen.l.Error(err.Error())
+				continue
+			}
+
 			gen.l.Info(fmt.Sprintf("receiving in an [%v]", t))
-			result := &storage.SentimentalResult{Label: "NEGATIVE", Score: 9}
-			err := gen.svc.UpdateSentimentalMsg(ctx, t, result)
+			err = gen.svc.UpdateSentimentalMsg(ctx, eventReceived.ID(), &t)
 
 			if err != nil {
 				gen.l.Error(err.Error())
@@ -201,7 +214,9 @@ func (gen *RabbitMqBus) listenAnalyzer(ch *amqp.Channel) {
 			event.SetDataContentType("application/json")
 			event.SetSource("sentimental/control")
 			event.SetType(gen.config.RabbitEventBus.ProducerWsRoutingKey)
-			event.SetData(cloudevents.ApplicationJSON, map[string]string{"msg": t})
+			event.SetData(cloudevents.ApplicationJSON, t)
+
+			bytes, _ := json.Marshal(event)
 
 			err = ch.PublishWithContext(ctx,
 				gen.config.RabbitEventBus.Exchange,
@@ -210,7 +225,7 @@ func (gen *RabbitMqBus) listenAnalyzer(ch *amqp.Channel) {
 				false,
 				amqp.Publishing{
 					ContentType: "application/json",
-					Body:        []byte(event.String()),
+					Body:        bytes,
 				},
 			)
 

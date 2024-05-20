@@ -10,6 +10,7 @@ type (
 	// Config -.
 	Config struct {
 		App            `yaml:"app"`
+		HTTP           `yaml:"http"`
 		Log            `yaml:"logger"`
 		EventBus       `yaml:"event_bus"`
 		RabbitEventBus `yaml:"rabbit_event_bus"`
@@ -19,6 +20,10 @@ type (
 	App struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
 		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+	}
+
+	HTTP struct {
+		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
 	}
 
 	// Log -.

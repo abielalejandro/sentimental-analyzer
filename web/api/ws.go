@@ -1,6 +1,8 @@
 package api
 
 import (
+	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/abielalejandro/web/config"
@@ -13,8 +15,8 @@ import (
 )
 
 var emojis map[string][]string = map[string][]string{
-	"POSITIVE": {":-)", "8-)", ":->", "<3"},
-	"NEGATIVE": {":=(", ">:[", ">:(", "<\\3"},
+	"POSITIVE": {"&#128512", "&#128513", "&#128522", "&#128525"},
+	"NEGATIVE": {"&#128530", "&#128544", "&#128548", "&#128545"},
 }
 
 var upgrader = websocket.Upgrader{
@@ -57,8 +59,10 @@ func NewHttpApi(
 func (httpApi *HttpApi) Run() {
 	httpApi.Router.HandleFunc("/health", httpApi.health).Methods("GET")
 	httpApi.Router.HandleFunc("/ws", httpApi.handlerWs)
+	httpApi.Router.HandleFunc("/", httpApi.homeHandler).Methods(http.MethodGet)
+	httpApi.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	httpApi.readLoopMsgs()
-	httpApi.log.Fatal(http.ListenAndServe(":8844", httpApi.Router))
+	log.Fatal(http.ListenAndServe(httpApi.config.HTTP.Port, httpApi.Router))
 }
 
 func (httpApi *HttpApi) health(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +77,34 @@ func (httpApi *HttpApi) handlerWs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpApi.handleConn(conn)
+}
+
+func (httpApi *HttpApi) render(w http.ResponseWriter, tpl string, data interface{}) {
+	tmpl, err := template.ParseFiles(tpl)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (httpApi *HttpApi) homeHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (httpApi *HttpApi) handleConn(conn *websocket.Conn) {
@@ -139,7 +171,7 @@ func (api *HttpApi) searchEmoji(s *event.SentimentalResult) string {
 	ss, ok := emojis[s.Label]
 
 	if !ok {
-		return "¯\\_(ツ)_/¯"
+		return "&#128533"
 	}
 
 	var i int

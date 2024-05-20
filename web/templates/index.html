@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sentimental analyzer</title>
+    <link rel="icon" href="/static/favicon.svg" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+
+    <link rel="stylesheet" href="/static/main.css" />
+  </head>
+  <body>
+    <main class="container is-fluid">
+      <section class="section columns is-gapless">
+        <div class="column  is-one-third">
+          <form method="POST" action="/" id="myForm">
+            <div class="columns">
+              <div class="field column">
+                <div class="control has-icons-left">
+                  <input
+                    name="text"
+                    required
+                    class="input is-primary"
+                    type="text"
+                    placeholder="Type your comment here.."
+                  />
+                  <span class="icon is-left">
+                    <span class="material-symbols-rounded">link</span>
+                  </span>
+                </div>
+              </div>
+              <div class="field column">
+                <div class="control">
+                  <button type="submit" class="button is-primary is-outlined">
+                    <span class="icon is-small">
+                      <span class="material-symbols-rounded">add_link</span>
+                    </span>
+                    <span>Comment!</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+          <ul id="sents" class="p-4"></ul>
+        </div>        
+        <div class="column ml-4">
+          <div class="card">
+            <div class="card_content">
+              <ul id="comments" class="p-4"></ul>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+    </main>
+
+    <script type="text/javascript">
+        let socket = new WebSocket("ws://localhost:8080/ws")
+        socket.onmessage=(event)=>{ proccessWsData(event.data)}
+
+        const form = document.getElementById("myForm");
+        form.addEventListener("submit", sendData);
+        let ul = document.getElementById("comments")
+        let sents = document.getElementById("sents")
+
+        function sendData(evt) {
+          evt.preventDefault();
+          const data = new FormData(evt.target);
+          const dataObject = Object.fromEntries(data.entries());
+          socket.send(dataObject["text"])
+          form.reset()
+        }
+
+        const processChatMessage = (msg)=> {
+          let el = document.createElement("li")
+          el.classList.add("has-text-right","has-text-primary")
+          el.innerHTML=msg.data.Msg
+          ul.prepend(el)
+        }
+
+        const processSentiment = (msg)=> {
+          let el = document.createElement("li")
+          el.classList.add("has-text-right","is-size-1","animate__animated","animate__zoomIn")
+          el.innerHTML=msg.data
+          sents.prepend(el)
+
+          setTimeout(()=>{
+            sents.removeChild(el)
+          },5000)
+        }
+
+        function proccessWsData(data) {
+          const fnMap = {
+            "ws.text.created": processChatMessage,
+            "master.text.analyzed": processSentiment,
+          }
+          const msg = JSON.parse(data);
+          const fn = fnMap[msg.type] || function (msg){console.log(msg)}
+
+          fn(msg)
+        }
+
+    </script>
+  </body>
+</html>
