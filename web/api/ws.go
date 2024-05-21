@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/abielalejandro/web/config"
 	"github.com/abielalejandro/web/internals/event"
@@ -28,6 +29,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type HttpApi struct {
+	mu     sync.Mutex
 	config *config.Config
 	Router *mux.Router
 	log    *logger.Logger
@@ -140,6 +142,8 @@ func (httpApi *HttpApi) readLoop(conn *websocket.Conn) {
 }
 
 func (api *HttpApi) broadcastMsg(evt *cloudevents.Event) {
+	api.mu.Lock()
+	defer api.mu.Unlock()
 	for conn, _ := range api.conns {
 		if err := conn.WriteJSON(evt); err != nil {
 			api.log.Error(err)

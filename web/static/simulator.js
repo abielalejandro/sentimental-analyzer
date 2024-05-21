@@ -22,14 +22,14 @@ const runSimulator = () => {
             input.value = positives[i];
             btn.click();
           }
-        }, 3000 * i);
+        }, 1000 * i);
 
         setTimeout(() => {
           if (negatives[i]) {
             input.value = negatives[i];
             btn.click();
           }
-        }, 5000 * i);
+        }, 2000 * i);
       }
     });
 };

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       'has-text-right',
       'is-size-1',
       'animate__animated',
-      'animate__zoomIn',
+      'animate__fadeIn',
     );
     el.innerHTML = msg.data;
     sents.prepend(el);
