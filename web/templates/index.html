@@ -21,22 +21,23 @@
     />
 
     <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
-  />
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
 
     <link rel="stylesheet" href="/static/main.css" />
   </head>
   <body>
     <main class="container is-fluid">
       <section class="section columns is-gapless">
-        <div class="column  is-one-third">
+        <div class="column is-one-third">
           <form method="POST" action="/" id="myForm">
             <div class="columns">
               <div class="field column">
                 <div class="control has-icons-left">
                   <input
                     name="text"
+                    id="text"
                     required
                     class="input is-primary"
                     type="text"
@@ -49,7 +50,11 @@
               </div>
               <div class="field column">
                 <div class="control">
-                  <button type="submit" class="button is-primary is-outlined">
+                  <button
+                    id="send"
+                    type="submit"
+                    class="button is-primary is-outlined"
+                  >
                     <span class="icon is-small">
                       <span class="material-symbols-rounded">add_link</span>
                     </span>
@@ -60,64 +65,20 @@
             </div>
           </form>
           <ul id="sents" class="p-4"></ul>
-        </div>        
+        </div>
         <div class="column ml-4">
-          <div class="card">
+          <div
+            class="card"
+            style="height: 85vh; max-height: 85vh; overflow-y: auto"
+          >
             <div class="card_content">
               <ul id="comments" class="p-4"></ul>
             </div>
           </div>
-          
         </div>
       </section>
     </main>
-
-    <script type="text/javascript">
-        let socket = new WebSocket("ws://localhost:8080/ws")
-        socket.onmessage=(event)=>{ proccessWsData(event.data)}
-
-        const form = document.getElementById("myForm");
-        form.addEventListener("submit", sendData);
-        let ul = document.getElementById("comments")
-        let sents = document.getElementById("sents")
-
-        function sendData(evt) {
-          evt.preventDefault();
-          const data = new FormData(evt.target);
-          const dataObject = Object.fromEntries(data.entries());
-          socket.send(dataObject["text"])
-          form.reset()
-        }
-
-        const processChatMessage = (msg)=> {
-          let el = document.createElement("li")
-          el.classList.add("has-text-right","has-text-primary")
-          el.innerHTML=msg.data.Msg
-          ul.prepend(el)
-        }
-
-        const processSentiment = (msg)=> {
-          let el = document.createElement("li")
-          el.classList.add("has-text-right","is-size-1","animate__animated","animate__zoomIn")
-          el.innerHTML=msg.data
-          sents.prepend(el)
-
-          setTimeout(()=>{
-            sents.removeChild(el)
-          },5000)
-        }
-
-        function proccessWsData(data) {
-          const fnMap = {
-            "ws.text.created": processChatMessage,
-            "master.text.analyzed": processSentiment,
-          }
-          const msg = JSON.parse(data);
-          const fn = fnMap[msg.type] || function (msg){console.log(msg)}
-
-          fn(msg)
-        }
-
-    </script>
+    <script src="static/simulator.js" type="text/javascript"></script>
+    <script type="text/javascript" src="static/main.js"></script>
   </body>
 </html>
