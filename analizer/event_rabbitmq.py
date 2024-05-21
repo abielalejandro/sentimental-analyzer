@@ -12,7 +12,7 @@ class RabbitEventBus(EventBus):
         if config.analyzer=="pysentimiento":
             self.analyzer = create_analyzer(task="sentiment", lang="es")
 
-        if config.analyzer=="pysentimiento":            
+        if config.analyzer=="transformers":            
             #self.sentiment_pipeline = pipeline("sentiment-analysis")
             self.sentiment_pipeline = pipeline(model="finiteautomata/bertweet-base-sentiment-analysis")
 

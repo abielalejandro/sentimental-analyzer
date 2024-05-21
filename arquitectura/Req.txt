@@ -1,0 +1,9 @@
+Buenas, les comparto otro proyectico que arme
+
+Chat Sentimental analyzer
+- Golang
+- Python (para analizar)
+- Web socket 
+- Cassandra (almacén temporal) TTL
+- RabbitMQ
+- Cloudevents (para estándar de eventos)
