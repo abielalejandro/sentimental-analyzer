@@ -12,6 +12,7 @@ import (
 	"github.com/abielalejandro/control/pkg/logger"
 	"github.com/abielalejandro/control/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -113,12 +114,12 @@ func (gen *RabbitMqBus) listenWs(ch *amqp.Channel) {
 				Id:  id,
 			}
 
-			event := cloudevents.NewEvent()
-			event.SetID(id)
-			event.SetDataContentType("application/json")
-			event.SetSource("sentimental/control")
-			event.SetType(gen.config.RabbitEventBus.ProducerAnalizerRoutingKey)
-			event.SetData(cloudevents.ApplicationJSON, toAnalyze)
+			event := utils.NewJsonCloudEvent(
+				id,
+				gen.config.ProducerAnalizerRoutingKey,
+				"sentimental/control",
+				toAnalyze,
+			)
 
 			bytes, _ := json.Marshal(event)
 
@@ -210,11 +211,12 @@ func (gen *RabbitMqBus) listenAnalyzer(ch *amqp.Channel) {
 				continue
 			}
 
-			event := cloudevents.NewEvent()
-			event.SetDataContentType("application/json")
-			event.SetSource("sentimental/control")
-			event.SetType(gen.config.RabbitEventBus.ProducerWsRoutingKey)
-			event.SetData(cloudevents.ApplicationJSON, t)
+			id, _ := uuid.NewRandom()
+			event := utils.NewJsonCloudEvent(
+				id.String(),
+				gen.config.RabbitEventBus.ProducerWsRoutingKey,
+				"sentimental/control",
+				t)
 
 			bytes, _ := json.Marshal(event)
 

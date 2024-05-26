@@ -9,6 +9,7 @@ import (
 	"github.com/abielalejandro/web/config"
 	"github.com/abielalejandro/web/internals/event"
 	"github.com/abielalejandro/web/pkg/logger"
+	"github.com/abielalejandro/web/pkg/utils"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -18,6 +19,7 @@ import (
 var emojis map[string][]string = map[string][]string{
 	"POSITIVE": {"&#128512", "&#128513", "&#128522", "&#128525"},
 	"NEGATIVE": {"&#128530", "&#128544", "&#128548", "&#128545"},
+	"NEUTRAL":  {"&#128523", "&#128528", "&#128529", "&#128516"},
 }
 
 var upgrader = websocket.Upgrader{
@@ -110,35 +112,41 @@ func (httpApi *HttpApi) homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (httpApi *HttpApi) handleConn(conn *websocket.Conn) {
+	httpApi.mu.Lock()
+	defer httpApi.mu.Unlock()
+
 	httpApi.conns[conn] = true
 	httpApi.readLoop(conn)
 }
 
 func (httpApi *HttpApi) readLoop(conn *websocket.Conn) {
-	for {
-		_, p, err := conn.ReadMessage()
-		if err != nil {
-			httpApi.log.Error(err)
-			return
+	go func() {
+		for {
+			_, p, err := conn.ReadMessage()
+			if err != nil {
+				httpApi.log.Error(err)
+				return
+			}
+
+			t := &event.Message{
+				Msg: string(p),
+			}
+
+			id, _ := uuid.NewRandom()
+
+			event := utils.NewJsonCloudEvent(
+				id.String(),
+				httpApi.config.RabbitEventBus.ProducerMasterRoutingKey,
+				"sentimental/ws",
+				t,
+			)
+
+			httpApi.broadcastMsg(&event)
+
+			httpApi.chW <- string(p[:])
+			httpApi.log.Info(string(p[:]))
 		}
-
-		t := &event.Message{
-			Msg: string(p),
-		}
-
-		id, _ := uuid.NewRandom()
-		event := cloudevents.NewEvent()
-		event.SetID(id.String())
-		event.SetDataContentType("application/json")
-		event.SetSource("sentimental/ws")
-		event.SetType(httpApi.config.RabbitEventBus.ProducerMasterRoutingKey)
-		event.SetData(cloudevents.ApplicationJSON, t)
-		httpApi.broadcastMsg(&event)
-
-		httpApi.chW <- string(p[:])
-		httpApi.log.Info(string(p[:]))
-	}
-
+	}()
 }
 
 func (api *HttpApi) broadcastMsg(evt *cloudevents.Event) {
@@ -160,12 +168,12 @@ func (api *HttpApi) readLoopMsgs() {
 			e := api.searchEmoji(&elem)
 
 			id, _ := uuid.NewRandom()
-			event := cloudevents.NewEvent()
-			event.SetID(id.String())
-			event.SetDataContentType("text/plain")
-			event.SetSource("sentimental/ws")
-			event.SetType(api.config.RabbitEventBus.ConsumerMasterRoutingKey)
-			event.SetData(cloudevents.TextPlain, e)
+			event := utils.NewTextCloudEvent(
+				id.String(),
+				api.config.RabbitEventBus.ConsumerMasterRoutingKey,
+				"sentimental/ws",
+				e,
+			)
 			api.broadcastMsg(&event)
 		}
 	}()

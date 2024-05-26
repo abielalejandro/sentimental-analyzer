@@ -3,5 +3,5 @@ python-decouple
 transformers
 tensorflow
 tf-keras
-emoji==0.6.0
+emoji
 pysentimiento

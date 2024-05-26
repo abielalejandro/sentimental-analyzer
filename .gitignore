@@ -3,3 +3,4 @@ vendor
 control/vendor
 web/vendor
 analyzer/vendor
+analyzer/__pycache__

@@ -21,6 +21,6 @@ class RabbitConfig:
 
 class Config:
   def __init__(self):
-      self.analyzer= config("PY_ANALYZER",default="pysentimiento")
+      self.analyzer= config("PY_ANALYZER",default="transformers")
       self.event_bus= EventBus()
       self.rabbitmq = RabbitConfig()      
